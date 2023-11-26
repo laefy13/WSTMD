@@ -1,7 +1,8 @@
 import os
 import time
-
-from model_wsddn import WSDDN_res
+import sys
+sys.path.append('./WSTMD/')
+from WSTMD.model_wsddn import WSDDN_res
 import torch
 import torch.nn as nn
 from torchvision import datasets, transforms
@@ -24,9 +25,9 @@ today=date.today()
 
 warnings.filterwarnings("ignore")
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-if not os.path.exists('./logs'):
+if not os.path.exists('./WSTMD/logs'):
     os.mkdir('logs')
-logging.basicConfig(filename=f'./logs/log{today}',format='%(asctime)s %(message)s',filemode='w')
+logging.basicConfig(filename=f'./WSTMD/logs/log{today}',format='%(asctime)s %(message)s',filemode='w')
 logger=logging.getLogger()
 logger.setLevel(logging.DEBUG) 
 
@@ -76,10 +77,10 @@ def wstmd_flops():
     IMAGE_HEIGHT, IMAGE_WIDTH = 224,224
 
     model_use_pretrain_weight = True
-    image_path = './data/img'  # tongue data set path
-    train_txt_path = 'txt/train_n.txt'
-    val_txt_path = 'txt/val_n.txt'
-    ssw_path = 'ssw_5.txt'
+    image_path = './WSTMD/data/img'  # tongue data set path
+    train_txt_path = './WSTMD/txt/train_n.txt'
+    val_txt_path = './WSTMD/txt/val_n.txt'
+    ssw_path = './WSTMD/ssw_5.txt'
     save_name = 'Resnet34_WSDDN'
 
     val_loss = []
@@ -93,7 +94,7 @@ def wstmd_flops():
 
     if model_use_pretrain_weight:
         # model_weight_path = "resnet34-333f7ec4.pth"
-        model_weight_path = "resnet34-333f7ec4.pth"
+        model_weight_path = "./WSTMD/resnet34-333f7ec4.pth"
         # model_weight_path = "resnet34_test.pkl"
 
         # model_weight_path = "vgg16-397923af.pth"
