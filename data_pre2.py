@@ -159,6 +159,6 @@ def main2(path):
 def main3(path):
     box11(path)
 if __name__ == '__main__':
-    # main1('data/img')
+    main1('data/img')
     # main2(r'C:\Users\hello\PycharmProjects\tongue\tongue_resnet_WSDDN\cul_time')
-    main3(r'C:\Users\hello\PycharmProjects\tongue\tongue_resnet_WSDDN\data\img\140829091953.png')
+    # main3(r'C:\Users\hello\PycharmProjects\tongue\tongue_resnet_WSDDN\data\img\140829091953.png')

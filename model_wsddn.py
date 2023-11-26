@@ -202,7 +202,7 @@ class WSDDN_res(nn.Module):
         self.layer3 = self._make_layer(block, 256, blocks_num[2], stride=2)
         self.layer4 = self._make_layer(block, 512, blocks_num[3], stride=2)
 
-        self.fc6 = nn.Linear(4096, 4096)
+        self.fc6 = nn.Linear(1024, 4096)
         self.fc7 = nn.Linear(4096, 4096)
         self.fc8c = nn.Linear(4096, numclasses)
         self.fc8d = nn.Linear(4096, numclasses)
@@ -281,20 +281,20 @@ class WSDDN_res(nn.Module):
 
 if __name__ == '__main__':
 
-    BATCH_SIZE = 16
-    R = 1000
+    # BATCH_SIZE = 16
+    # R = 1000
 
-    net_test = WSDDN('VGG16',numclasses=2)
-    x_test = torch.randn(BATCH_SIZE, 3, 224, 224)
-    ssw_spp = torch.zeros(BATCH_SIZE, R, 4)
-    for i in range(BATCH_SIZE):
-        for j in range(R):
-            ssw_spp[i, j, 0] = 0
-            ssw_spp[i, j, 1] = 0
-            ssw_spp[i, j, 2] = 4
-            ssw_spp[i, j, 3] = 4
-    out_test = net_test(x_test, ssw_spp)
-    print(out_test[0].shape)
+    # net_test = WSDDN('VGG16',numclasses=2)
+    # x_test = torch.randn(BATCH_SIZE, 3, 224, 224)
+    # ssw_spp = torch.zeros(BATCH_SIZE, R, 4)
+    # for i in range(BATCH_SIZE):
+    #     for j in range(R):
+    #         ssw_spp[i, j, 0] = 0
+    #         ssw_spp[i, j, 1] = 0
+    #         ssw_spp[i, j, 2] = 4
+    #         ssw_spp[i, j, 3] = 4
+    # out_test = net_test(x_test, ssw_spp)
+    # print(out_test[0].shape)
     '''
     ssw_spp = torch.zeros(BATCH_SIZE, R, 4)
     for i in range(BATCH_SIZE):

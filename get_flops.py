@@ -1,7 +1,7 @@
 import os
 import time
 
-from model import resnet34, WSDDN_res
+from model_wsddn import WSDDN_res
 import torch
 import torch.nn as nn
 from torchvision import datasets, transforms
@@ -16,16 +16,25 @@ import numpy as np
 from itertools import cycle
 import warnings
 from MyDataset import MyDataset
+from torchprofile import profile_macs
+import logging
+from datetime import date
+
+today=date.today()
 
 warnings.filterwarnings("ignore")
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
+if not os.path.exists('./logs'):
+    os.mkdir('logs')
+logging.basicConfig(filename=f'./logs/log{today}',format='%(asctime)s %(message)s',filemode='w')
+logger=logging.getLogger()
+logger.setLevel(logging.DEBUG) 
 
 # print("device is " + str(torch.cuda.get_device_name()))
 
 def get_confusion_matrix(trues, preds):
     labels = [0, 1]
-    conf_matrix = confusion_matrix(trues, preds, labels)
+    conf_matrix = confusion_matrix(trues, preds)
     return conf_matrix
 
 
@@ -56,8 +65,8 @@ def plot_confusion_matrix(conf_matrix):
     plt.show()
 
 
-def main():
-    EPOCH = 300
+def wstmd_flops():
+    EPOCH = 1
     best_accuracy = 0.0
     trigger = 0
     early_stop_step = 20
@@ -67,9 +76,9 @@ def main():
     IMAGE_HEIGHT, IMAGE_WIDTH = 224,224
 
     model_use_pretrain_weight = True
-    image_path = 'data/img'  # tongue data set path
-    train_txt_path = 'txt/train1_t.txt'
-    val_txt_path = 'txt/val1_t.txt'
+    image_path = './data/img'  # tongue data set path
+    train_txt_path = 'txt/train_n.txt'
+    val_txt_path = 'txt/val_n.txt'
     ssw_path = 'ssw_5.txt'
     save_name = 'Resnet34_WSDDN'
 
@@ -84,7 +93,7 @@ def main():
 
     if model_use_pretrain_weight:
         # model_weight_path = "resnet34-333f7ec4.pth"
-        model_weight_path = "pre_weight/resnet34_t_pre_1.pkl"
+        model_weight_path = "resnet34-333f7ec4.pth"
         # model_weight_path = "resnet34_test.pkl"
 
         # model_weight_path = "vgg16-397923af.pth"
@@ -106,6 +115,8 @@ def main():
 
     print(model)
     print('params:' + str(count_params(model)) + '\n')
+    logger.info(model)
+    logger.info('params:' + str(count_params(model)) + '\n')
 
     model.to(device)
 
@@ -145,6 +156,7 @@ def main():
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.98)
 
     print("start training" + '\n')
+    logger.warning('start training \n')
 
     before = time.time()
     for epoch in range(EPOCH):
@@ -161,8 +173,14 @@ def main():
             train_label_batch = train_label_batch.to(device)
             train_box_batch = train_box_batch.float().to(device)
 
+
+            if i==0:
+                flops = profile_macs(model, (train_data_batch,train_box_batch))
+                print(f"FLOPs: {flops / 1e9} GFLOPs")
+                logger.info(f"FLOPs: {flops / 1e9} GFLOPs")
             train_outputs, train_op2, train_op3 = model(train_data_batch, train_box_batch)
             loss = criterion(train_outputs, train_label_batch)
+            logger.info('loss: %s', loss)
             # print(loss)
             # 反向传播优化网络参数
             loss.backward()
@@ -183,6 +201,8 @@ def main():
         f1 = f1_score(train_trues, train_preds)
 
         print("[train] Epoch:{} accuracy:{:.4f} precision:{:.4f} recall:{:.4f} f1:{:.4f} loss:{:.4f}".format(
+            epoch, train_accuracy, precision, recall, f1, tot_train_loss))
+        logger.info("[train] Epoch:{} accuracy:{:.4f} precision:{:.4f} recall:{:.4f} f1:{:.4f} loss:{:.4f}".format(
             epoch, train_accuracy, precision, recall, f1, tot_train_loss))
 
         val_preds = []
@@ -212,6 +232,12 @@ def main():
             conf_matrix = get_confusion_matrix(val_trues, val_preds)
 
             print("[val] Epoch:{} accuracy:{:.4f} precision:{:.4f} recall:{:.4f} f1:{:.4f} loss:{:.4f} ".format(epoch,
+                                                                                                                accuracy,
+                                                                                                                precision,
+                                                                                                                recall,
+                                                                                                                f1,
+                                                                                                                tot_val_loss))
+            logger.info("[val] Epoch:{} accuracy:{:.4f} precision:{:.4f} recall:{:.4f} f1:{:.4f} loss:{:.4f} ".format(epoch,
                                                                                                                 accuracy,
                                                                                                                 precision,
                                                                                                                 recall,
@@ -250,7 +276,8 @@ def main():
     print('total_time: ' + str(total_time / 60) + ' min')
     print('best_accuracy: ' + str(best_accuracy))
     print('trigger: ' + str(trigger))
-
+    return (flops / 1e9)
 
 if __name__ == '__main__':
-    main()
+    wstmd_flops()
+
